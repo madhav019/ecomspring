@@ -1,5 +1,6 @@
 package com.madhav.ecomspring.productservice.advice;
 
+import com.madhav.ecomspring.productservice.config.ApiResponseProperties;
 import com.madhav.ecomspring.productservice.dto.response.ErrorResponse;
 import com.madhav.ecomspring.productservice.dto.response.SuccessResponse;
 import org.springframework.core.MethodParameter;
@@ -19,6 +20,11 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 public class ApiResponseAdvisor implements ResponseBodyAdvice<Object> {
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private final ApiResponseProperties apiResponseProperties;
+
+    public ApiResponseAdvisor(ApiResponseProperties apiResponseProperties) {
+        this.apiResponseProperties = apiResponseProperties;
+    }
 
     @Override
     public boolean supports(MethodParameter returnType, Class<? extends HttpMessageConverter<?>> converterType) {
@@ -30,6 +36,12 @@ public class ApiResponseAdvisor implements ResponseBodyAdvice<Object> {
 
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         String requestPath = attributes.getRequest().getRequestURI();
+
+        for(String excluded: apiResponseProperties.getExcludedPaths()) {
+            if(pathMatcher.match(excluded, requestPath)) {
+                return false;
+            }
+        }
 
         // TODO: Exclude specific paths if needed
 
